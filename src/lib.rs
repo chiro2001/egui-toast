@@ -274,11 +274,9 @@ impl Toasts {
         self
     }
 
-    /// Shows and updates all toasts
-    pub fn show(&mut self, ctx: &Context) {
+    pub fn show_with_anchor(&mut self, ctx: &Context, anchor: Pos2) {
         let Self {
             id,
-            anchor,
             align_to_end,
             direction,
             ..
@@ -367,6 +365,11 @@ impl Toasts {
                     );
                 });
             });
+    }
+
+    /// Shows and updates all toasts
+    pub fn show(&mut self, ctx: &Context) {
+        self.show_with_anchor(ctx, self.anchor);
     }
 }
 
