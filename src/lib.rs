@@ -75,8 +75,6 @@
 #![deny(clippy::all)]
 
 use std::collections::HashMap;
-use std::ops::Add;
-use std::time::{Duration, Instant};
 
 use egui::{
     Align, Area, Color32, Context, Direction, Id, Layout, Order, Pos2, Rect, Response, RichText,
@@ -115,28 +113,37 @@ pub struct ToastOptions {
     /// This can be used to show or hide the toast type icon.
     pub show_icon: bool,
     /// If defined, the toast is removed when it expires.
-    pub expires_at: Option<Instant>,
+    #[cfg(feature = "time")]
+    pub expires_at: Option<std::time::Instant>,
+    #[cfg(not(feature = "time"))]
+    pub to_remove: bool,
 }
 
 impl Default for ToastOptions {
     fn default() -> Self {
         Self {
             show_icon: true,
+            #[cfg(feature = "time")]
             expires_at: None,
+            #[cfg(not(feature = "time"))]
+            to_remove: false,
         }
     }
 }
 
-impl From<Duration> for ToastOptions {
-    fn from(duration: Duration) -> Self {
+#[cfg(feature = "time")]
+impl From<std::time::Duration> for ToastOptions {
+    fn from(duration: std::time::Duration) -> Self {
         ToastOptions::with_duration(duration)
     }
 }
 
 impl ToastOptions {
-    pub fn with_duration(duration: impl Into<Option<Duration>>) -> Self {
+    #[cfg(feature = "time")]
+    pub fn with_duration(duration: impl Into<Option<std::time::Duration>>) -> Self {
+        use std::ops::Add;
         Self {
-            expires_at: duration.into().map(|duration| Instant::now().add(duration)),
+            expires_at: duration.into().map(|duration| std::time::Instant::now().add(duration)),
             ..Default::default()
         }
     }
@@ -144,7 +151,10 @@ impl ToastOptions {
 
 impl Toast {
     pub fn close(&mut self) {
-        self.options.expires_at = Some(Instant::now());
+        #[cfg(feature = "time")]
+        { self.options.expires_at = Some(std::time::Instant::now()); }
+        #[cfg(not(feature = "time"))]
+        { self.options.to_remove = true; }
     }
 }
 
@@ -287,8 +297,6 @@ impl Toasts {
             .interactable(true)
             .movable(false)
             .show(ctx, |ui| {
-                let now = Instant::now();
-
                 let rect = match (direction, align_to_end) {
                     (Direction::LeftToRight | Direction::TopDown, false) => {
                         Rect::from_min_size(anchor, screen_area.size() - anchor.to_vec2())
@@ -339,11 +347,19 @@ impl Toasts {
                             ctx.data().insert_temp(id.with("pos"), next_area_pos);
 
                             toasts.retain(|toast| {
-                                toast
-                                    .options
-                                    .expires_at
-                                    .filter(|&expires_at| expires_at <= now)
-                                    .is_none()
+                                #[cfg(feature = "time")]
+                                {
+                                    let now = std::time::Instant::now();
+                                    toast
+                                        .options
+                                        .expires_at
+                                        .filter(|&expires_at| expires_at <= now)
+                                        .is_none()
+                                }
+                                #[cfg(not(feature = "time"))]
+                                {
+                                    !toast.options.to_remove
+                                }
                             });
 
                             ctx.data().insert_temp(id, toasts);

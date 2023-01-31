@@ -15,5 +15,9 @@ keywords = ["egui", "toast", "notification"]
 [dependencies]
 egui = "0.20.1"
 
+[features]
+time = []
+default = ["time"]
+
 [dev-dependencies]
 eframe = { version = "0.20.1", features = ["dark-light"] }

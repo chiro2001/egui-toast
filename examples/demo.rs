@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use eframe::egui;
 use egui::style::Margin;
 use egui::{Color32, Direction, Frame, Pos2, RichText, Widget};
@@ -117,15 +115,26 @@ impl Demo {
 
                 ui.separator();
 
-                let duration = if self.duration_sec < 0.01 {
-                    None
-                } else {
-                    Some(Duration::from_secs_f32(self.duration_sec))
-                };
-
-                let options = ToastOptions {
-                    show_icon: self.show_icon,
-                    ..ToastOptions::with_duration(duration)
+                let options = {
+                    #[cfg(feature = "time")]
+                    {
+                        let duration = if self.duration_sec < 0.01 {
+                            None
+                        } else {
+                            Some(std::time::Duration::from_secs_f32(self.duration_sec))
+                        };
+                        ToastOptions {
+                            show_icon: self.show_icon,
+                            ..ToastOptions::with_duration(duration)
+                        }
+                    }
+                    #[cfg(not(feature = "time"))]
+                    {
+                        ToastOptions {
+                            show_icon: self.show_icon,
+                            ..Default::default()
+                        }
+                    }
                 };
 
                 if ui.button("Give me a toast").clicked() {
