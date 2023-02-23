@@ -7,12 +7,12 @@ use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
 /// Identifier for a custom toast kind
 const MY_CUSTOM_TOAST: u32 = 0;
 
-fn main() {
+fn main() -> Result<(), eframe::Error> {
     eframe::run_native(
         "egui-toast demo",
         eframe::NativeOptions::default(),
         Box::new(|_cc| Box::new(Demo::default())),
-    );
+    )
 }
 
 struct Demo {
