@@ -78,7 +78,7 @@ use std::collections::HashMap;
 
 use egui::{
     Align, Area, Color32, Context, Direction, Id, Layout, Order, Pos2, Rect, Response, RichText,
-    Ui, Vec2, WidgetText,
+    Ui, Vec2, WidgetText
 };
 
 pub const INFO_COLOR: Color32 = Color32::from_rgb(0, 155, 255);
@@ -282,12 +282,12 @@ impl Toasts {
             ..
         } = *self;
 
-        let mut toasts: Vec<Toast> = ctx.data().get_temp(id).unwrap_or_default();
+        let mut toasts: Vec<Toast> = ctx.data_mut(|i| i.get_temp(id)).unwrap_or_default();
         toasts.extend(std::mem::take(&mut self.toasts));
 
         let screen_area = ctx.available_rect();
 
-        let area_pos: Pos2 = ctx.data().get_temp(id.with("pos")).unwrap_or_default();
+        let area_pos: Pos2 = ctx.data_mut(|i| i.get_temp(id.with("pos"))).unwrap_or_default();
 
         Area::new(id.with("area"))
             .fixed_pos(area_pos)
@@ -342,7 +342,7 @@ impl Toasts {
                                 next_area_pos = anchor;
                             }
 
-                            ctx.data().insert_temp(id.with("pos"), next_area_pos);
+                            ctx.data_mut(|i| i.insert_temp(id.with("pos"), next_area_pos));
 
                             toasts.retain(|toast| {
                                 #[cfg(feature = "time")]
@@ -360,7 +360,7 @@ impl Toasts {
                                 }
                             });
 
-                            ctx.data().insert_temp(id, toasts);
+                            ctx.data_mut(|i| i.insert_temp(id, toasts));
                         },
                     );
                 });
